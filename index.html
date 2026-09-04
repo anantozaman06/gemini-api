@@ -1,0 +1,3219 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gemini Local API - Vibe Coding & Agent Platform</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0a0a14;
+      --bg-secondary: #121224;
+      --bg-card: #181830;
+      --bg-hover: #222244;
+      --text-primary: #f0f0ff;
+      --text-secondary: #a8a8cc;
+      --text-muted: #6e6e94;
+      --accent: #6366f1;
+      --accent-hover: #818cf8;
+      --success: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --border: #232342;
+      --sidebar-width: 260px;
+      --radius: 14px;
+      --radius-sm: 8px;
+      --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      --font-mono: 'JetBrains Mono', 'Cascadia Code', monospace;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      display: flex;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg-primary);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--text-muted);
+    }
+
+    .sidebar {
+      width: var(--sidebar-width);
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100vh;
+      z-index: 100;
+    }
+
+    .sidebar-brand {
+      padding: 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .sidebar-brand .logo {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--accent), #06b6d4);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .sidebar-brand h1 {
+      font-size: 16px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent), #06b6d4);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .sidebar-brand small {
+      font-size: 11px;
+      color: var(--text-muted);
+      -webkit-text-fill-color: var(--text-muted);
+    }
+
+    .sidebar-nav {
+      flex: 1;
+      padding: 12px 10px;
+      overflow-y: auto;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: all 0.2s;
+      margin-bottom: 2px;
+      font-size: 14px;
+      user-select: none;
+    }
+
+    .nav-item:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    .nav-item.active {
+      background: rgba(124, 92, 252, 0.15);
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .nav-item .icon {
+      font-size: 18px;
+      width: 24px;
+      text-align: center;
+    }
+
+    .main {
+      margin-left: var(--sidebar-width);
+      flex: 1;
+      padding: 24px 32px;
+      min-height: 100vh;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      margin-bottom: 20px;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .card-header h2 {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .card-header h3 {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .status-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .status-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+    }
+
+    .status-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .status-dot.online {
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success);
+    }
+
+    .status-dot.offline {
+      background: var(--danger);
+      box-shadow: 0 0 8px var(--danger);
+    }
+
+    .status-dot.warning {
+      background: var(--warning);
+      box-shadow: 0 0 8px var(--warning);
+    }
+
+    .status-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .status-value {
+      font-size: 14px;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+
+    .url-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 8px 12px;
+      margin-top: 8px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--text-primary);
+    }
+
+    .url-box .url-text {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .url-box .copy-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    .url-box .copy-btn:hover {
+      background: var(--bg-hover);
+      color: var(--accent);
+    }
+
+    .btn {
+      padding: 8px 20px;
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #7c3aed);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, var(--accent-hover), #8b5cf6);
+    }
+
+    .btn-secondary {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--accent);
+    }
+
+    .btn-sm {
+      padding: 4px 12px;
+      font-size: 12px;
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    .btn-danger:hover {
+      background: #dc2626;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 10px 14px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-size: 14px;
+      transition: border-color 0.2s;
+      font-family: inherit;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(124, 92, 252, 0.15);
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 100px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+    }
+
+    .form-group select {
+      cursor: pointer;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .toggle-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .toggle {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+
+    .toggle input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: var(--border);
+      border-radius: 24px;
+      transition: 0.3s;
+    }
+
+    .toggle .slider:before {
+      content: "";
+      position: absolute;
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background: #fff;
+      border-radius: 50%;
+      transition: 0.3s;
+    }
+
+    .toggle input:checked+.slider {
+      background: var(--accent);
+    }
+
+    .toggle input:checked+.slider:before {
+      transform: translateX(20px);
+    }
+
+    .toggle-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    th {
+      text-align: left;
+      padding: 10px 12px;
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover td {
+      background: rgba(124, 92, 252, 0.04);
+    }
+
+    .method-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      font-family: var(--font-mono);
+    }
+
+    .method-get {
+      background: rgba(52, 211, 153, 0.15);
+      color: var(--success);
+    }
+
+    .method-post {
+      background: rgba(124, 92, 252, 0.15);
+      color: var(--accent);
+    }
+
+    .endpoint-path {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--accent);
+    }
+
+    .response-box {
+      background: #0a0a14;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      line-height: 1.6;
+      min-height: 200px;
+      max-height: 500px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      position: relative;
+    }
+
+    .response-box .placeholder {
+      color: var(--text-muted);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    .response-info {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      padding: 10px 0;
+      font-size: 13px;
+      color: var(--text-secondary);
+      flex-wrap: wrap;
+    }
+
+    .response-info strong {
+      color: var(--text-primary);
+    }
+
+    /* Image gallery */
+    .image-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .image-grid img {
+      width: 100%;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .image-grid img:hover {
+      transform: scale(1.02);
+    }
+
+    .media-preview {
+      margin: 8px 0;
+    }
+
+    .media-preview video,
+    .media-preview audio {
+      width: 100%;
+      border-radius: var(--radius-sm);
+    }
+
+    .thoughts-box {
+      background: rgba(245, 158, 11, 0.08);
+      border-left: 3px solid var(--warning);
+      padding: 10px 14px;
+      margin: 8px 0;
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      font-size: 12px;
+      color: #fbbf24;
+    }
+
+    .thoughts-box summary {
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .toast-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+    }
+
+    .toast {
+      padding: 14px 20px;
+      border-radius: var(--radius-sm);
+      margin-bottom: 8px;
+      font-size: 14px;
+      box-shadow: var(--shadow);
+      animation: slideIn 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 280px;
+    }
+
+    .toast-success {
+      background: #065f46;
+      border: 1px solid var(--success);
+      color: #a7f3d0;
+    }
+
+    .toast-error {
+      background: #7f1d1d;
+      border: 1px solid var(--danger);
+      color: #fca5a5;
+    }
+
+    .toast-info {
+      background: #1e3a5f;
+      border: 1px solid #3b82f6;
+      color: #93c5fd;
+    }
+
+    .toast-close {
+      margin-left: auto;
+      background: none;
+      border: none;
+      color: inherit;
+      cursor: pointer;
+      font-size: 18px;
+      opacity: 0.7;
+    }
+
+    .toast-close:hover {
+      opacity: 1;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    .page-title {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-overlay.show {
+      display: flex;
+    }
+
+    .status-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .status-dot.online {
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success);
+    }
+
+    .status-dot.offline {
+      background: var(--danger);
+      box-shadow: 0 0 8px var(--danger);
+    }
+
+    .status-dot.warning {
+      background: var(--warning);
+      box-shadow: 0 0 8px var(--warning);
+    }
+
+    .status-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .status-value {
+      font-size: 14px;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+
+    /* URL box */
+    .url-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 8px 12px;
+      margin-top: 8px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--text-primary);
+    }
+
+    .url-box .url-text {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .url-box .copy-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    .url-box .copy-btn:hover {
+      background: var(--bg-hover);
+      color: var(--accent);
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 8px 20px;
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #7c3aed);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, var(--accent-hover), #8b5cf6);
+    }
+
+    .btn-secondary {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--accent);
+    }
+
+    .btn-sm {
+      padding: 4px 12px;
+      font-size: 12px;
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    .btn-danger:hover {
+      background: #dc2626;
+    }
+
+    /* Form elements */
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 10px 14px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-size: 14px;
+      transition: border-color 0.2s;
+      font-family: inherit;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(124, 92, 252, 0.15);
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 100px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+    }
+
+    .form-group select {
+      cursor: pointer;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    /* Toggle switch */
+    .toggle-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .toggle {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+
+    .toggle input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: var(--border);
+      border-radius: 24px;
+      transition: 0.3s;
+    }
+
+    .toggle .slider:before {
+      content: "";
+      position: absolute;
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background: #fff;
+      border-radius: 50%;
+      transition: 0.3s;
+    }
+
+    .toggle input:checked+.slider {
+      background: var(--accent);
+    }
+
+    .toggle input:checked+.slider:before {
+      transform: translateX(20px);
+    }
+
+    .toggle-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    /* Table */
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    th {
+      text-align: left;
+      padding: 10px 12px;
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover td {
+      background: rgba(124, 92, 252, 0.04);
+    }
+
+    .method-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      font-family: var(--font-mono);
+    }
+
+    .method-get {
+      background: rgba(52, 211, 153, 0.15);
+      color: var(--success);
+    }
+
+    .method-post {
+      background: rgba(124, 92, 252, 0.15);
+      color: var(--accent);
+    }
+
+    .endpoint-path {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--accent);
+    }
+
+    /* Response box */
+    .response-box {
+      background: #0a0a14;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      line-height: 1.6;
+      min-height: 200px;
+      max-height: 500px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      position: relative;
+    }
+
+    .response-box .placeholder {
+      color: var(--text-muted);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    .response-info {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      padding: 10px 0;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .response-info strong {
+      color: var(--text-primary);
+    }
+
+    /* Toast */
+    .toast-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+    }
+
+    .toast {
+      padding: 14px 20px;
+      border-radius: var(--radius-sm);
+      margin-bottom: 8px;
+      font-size: 14px;
+      box-shadow: var(--shadow);
+      animation: slideIn 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 280px;
+    }
+
+    .toast-success {
+      background: #065f46;
+      border: 1px solid var(--success);
+      color: #a7f3d0;
+    }
+
+    .toast-error {
+      background: #7f1d1d;
+      border: 1px solid var(--danger);
+      color: #fca5a5;
+    }
+
+    .toast-info {
+      background: #1e3a5f;
+      border: 1px solid #3b82f6;
+      color: #93c5fd;
+    }
+
+    .toast-close {
+      margin-left: auto;
+      background: none;
+      border: none;
+      color: inherit;
+      cursor: pointer;
+      font-size: 18px;
+      opacity: 0.7;
+    }
+
+    .toast-close:hover {
+      opacity: 1;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    /* Page title */
+    .page-title {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* Sections */
+    .section-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+
+    /* Code modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-overlay.show {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      max-width: 600px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    .modal h3 {
+      margin-bottom: 12px;
+    }
+
+    .modal pre {
+      background: #0a0a14;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .modal-close {
+      float: right;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 20px;
+    }
+
+    .modal-close:hover {
+      color: var(--text-primary);
+    }
+
+    /* Utility */
+    .flex {
+      display: flex;
+    }
+
+    .flex-center {
+      align-items: center;
+    }
+
+    .gap-8 {
+      gap: 8px;
+    }
+
+    .gap-12 {
+      gap: 12px;
+    }
+
+    .gap-16 {
+      gap: 16px;
+    }
+
+    .mt-8 {
+      margin-top: 8px;
+    }
+
+    .mt-16 {
+      margin-top: 16px;
+    }
+
+    .mb-8 {
+      margin-bottom: 8px;
+    }
+
+    .text-center {
+      text-align: center;
+    }
+
+    .text-muted {
+      color: var(--text-muted);
+    }
+
+    .w-full {
+      width: 100%;
+    }
+
+    /* Loading spinner */
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* Timeline in response streaming */
+    .stream-cursor::after {
+      content: '▋';
+      animation: blink 1s step-end infinite;
+      color: var(--accent);
+    }
+
+    @keyframes blink {
+      50% {
+        opacity: 0;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 60px;
+      }
+
+      .sidebar-brand h1,
+      .sidebar-brand small,
+      .nav-item span {
+        display: none;
+      }
+
+      .nav-item {
+        justify-content: center;
+        padding: 12px;
+      }
+
+      .main {
+        margin-left: 60px;
+        padding: 16px;
+      }
+
+      .status-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Media Sections */
+    .media-section {
+      display: none;
+    }
+
+    .media-section.active {
+      display: block;
+    }
+
+    .media-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .media-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .media-card-header h2 {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .response-info {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      padding: 10px 0;
+      font-size: 13px;
+      color: var(--text-secondary);
+      flex-wrap: wrap;
+    }
+
+    .response-info strong {
+      color: var(--text-primary);
+    }
+
+    /* Vibe Coding & Agent Styles */
+    .vibe-code-input {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--accent);
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 12px;
+      width: 100%;
+    }
+
+    .vibe-step-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+      font-size: 13px;
+    }
+
+    .vibe-step-thought {
+      color: var(--text-secondary);
+      line-height: 1.5;
+      margin-bottom: 8px;
+    }
+
+    .vibe-step-tool {
+      background: rgba(99, 102, 241, 0.12);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      color: var(--accent);
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-family: monospace;
+      font-size: 12px;
+      margin-bottom: 8px;
+    }
+
+    .vibe-step-obs {
+      background: #0d1117;
+      color: #58a6ff;
+      border-radius: 6px;
+      padding: 10px;
+      font-family: monospace;
+      font-size: 12px;
+      white-space: pre-wrap;
+      max-height: 250px;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="logo">✨</div>
+      <div>
+        <h1>Gemini API</h1>
+        <small>Local Server</small>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-item active" data-tab="dashboard">
+        <span class="icon">🏠</span>
+        <span>Dashboard</span>
+      </div>
+      <div class="nav-item" data-tab="vibe-coding">
+        <span class="icon">⚡</span>
+        <span>Vibe Coding</span>
+      </div>
+      <div class="nav-item" data-tab="endpoints">
+        <span class="icon">🔌</span>
+        <span>API Endpoints</span>
+      </div>
+      <div class="nav-item" data-tab="settings">
+        <span class="icon">⚙️</span>
+        <span>Settings</span>
+      </div>
+      <div class="nav-item" data-tab="test">
+        <span class="icon">🧪</span>
+        <span>Test API</span>
+      </div>
+      <div class="nav-item" data-tab="generate-image">
+        <span class="icon">🖼️</span>
+        <span>Generate Image</span>
+      </div>
+      <div class="nav-item" data-tab="generate-video">
+        <span class="icon">🎬</span>
+        <span>Generate Video</span>
+      </div>
+      <div class="nav-item" data-tab="generate-media">
+        <span class="icon">🎵</span>
+        <span>Generate Media</span>
+      </div>
+      <div class="nav-item" data-tab="deep-research">
+        <span class="icon">🔬</span>
+        <span>Deep Research</span>
+      </div>
+      <div class="nav-item" data-tab="gems">
+        <span class="icon">💎</span>
+        <span>Gems</span>
+      </div>
+      <div class="nav-item" data-tab="chats">
+        <span class="icon">💬</span>
+        <span>Chat History</span>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main">
+
+    <!-- ========== DASHBOARD ========== -->
+    <div class="tab-content active" id="tab-dashboard">
+      <div class="page-title">🏠 Dashboard</div>
+      <div class="card">
+        <div class="card-header">
+          <h2>Server Status</h2>
+          <span id="last-refresh" class="text-muted" style="font-size:12px;"></span>
+        </div>
+        <div class="status-grid">
+          <div class="status-item">
+            <div class="status-dot offline" id="server-dot"></div>
+            <div>
+              <div class="status-label">API Server</div>
+              <div class="status-value" id="server-status">Checking...</div>
+            </div>
+          </div>
+          <div class="status-item">
+            <div class="status-dot offline" id="gemini-dot"></div>
+            <div>
+              <div class="status-label">Gemini Client</div>
+              <div class="status-value" id="gemini-status">Checking...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2>Access URLs</h2>
+          <button class="btn btn-secondary btn-sm" onclick="refreshDashboard()">🔄 Refresh</button>
+        </div>
+        <div class="section-title">📍 Local URL</div>
+        <div class="url-box">
+          <span>🔗</span>
+          <span class="url-text" id="local-url">Loading...</span>
+          <button class="copy-btn" onclick="copyText('local-url')" title="Copy URL">📋</button>
+        </div>
+        <div class="section-title mt-16">🌐 Cloudflare Tunnel URL</div>
+        <div class="url-box">
+          <span>🔗</span>
+          <span class="url-text" id="tunnel-url">Not connected</span>
+          <button class="copy-btn" onclick="copyText('tunnel-url')" title="Copy URL">📋</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2>Quick Actions</h2>
+        </div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button class="btn btn-primary" onclick="switchTab('test')">🧪 Test API</button>
+          <button class="btn btn-secondary" onclick="switchTab('settings')">⚙️ Settings</button>
+          <button class="btn btn-secondary" onclick="window.open('/docs', '_blank')">📖 API Docs</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== VIBE CODING & AGENT ========== -->
+    <div class="tab-content" id="tab-vibe-coding">
+      <div class="page-title">⚡ Vibe Coding & Autonomous Agent</div>
+
+      <!-- IDE Quick Setup Guides -->
+      <div class="card">
+        <div class="card-header">
+          <h2>🔌 Connect External Coding Agents (Cursor, Cline, Roo Code, Continue, Aider)</h2>
+          <span class="badge"
+            style="background:rgba(99,102,241,0.15);color:var(--accent);padding:4px 10px;border-radius:12px;font-size:12px;border:1px solid rgba(99,102,241,0.3);">OpenAI
+            Tool Calling Supported</span>
+        </div>
+        <p class="text-muted" style="font-size:13px;margin-bottom:16px;">
+          Use your local Gemini API as an OpenAI-compatible backend. All external coding agents can autonomously
+          read/write files and run commands via tool calls.
+        </p>
+        <div class="status-grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));">
+          <div class="status-item" style="flex-direction:column;align-items:flex-start;gap:8px;">
+            <div style="display:flex;align-items:center;gap:8px;font-weight:600;">
+              <span>⚡</span> Kilo Code &amp; Cline (VS Code)
+            </div>
+            <div style="font-size:12px;color:var(--text-secondary);">
+              Provider: <strong>OpenAI-Compatible</strong>
+            </div>
+            <div style="display:flex;gap:6px;width:100%;">
+              <input type="text" readonly value="http://localhost:5353/v1" class="vibe-code-input" id="kilo-url">
+              <button class="btn btn-secondary btn-sm" onclick="copyTextValue('http://localhost:5353/v1')">📋</button>
+            </div>
+            <div style="font-size:12px;color:var(--text-muted);">
+              Model ID: <code>gemini-2.5-pro</code> or <code>gemini-2.0-flash</code><br>
+              API Key: <code>gemini-local</code> | Context: <code>1048576</code>
+            </div>
+          </div>
+
+          <div class="status-item" style="flex-direction:column;align-items:flex-start;gap:8px;">
+            <div style="display:flex;align-items:center;gap:8px;font-weight:600;">
+              <span>🖱️</span> Cursor IDE
+            </div>
+            <div style="font-size:12px;color:var(--text-secondary);">
+              Settings &gt; Models &gt; Override Base URL:
+            </div>
+            <div style="display:flex;gap:6px;width:100%;">
+              <input type="text" readonly value="http://localhost:5353/v1" class="vibe-code-input" id="cursor-url">
+              <button class="btn btn-secondary btn-sm" onclick="copyTextValue('http://localhost:5353/v1')">📋</button>
+            </div>
+            <div style="font-size:12px;color:var(--text-muted);">Model: <code>gemini-2.5-pro</code> or
+              <code>gpt-4o</code> | Key: <code>gemini-local</code>
+            </div>
+          </div>
+
+          <div class="status-item" style="flex-direction:column;align-items:flex-start;gap:8px;">
+            <div style="display:flex;align-items:center;gap:8px;font-weight:600;">
+              <span>⏩</span> Continue.dev
+            </div>
+            <div style="font-size:12px;color:var(--text-secondary);">
+              Add to <code>~/.continue/config.json</code>:
+            </div>
+            <button class="btn btn-secondary btn-sm" style="width:100%;" onclick="copyContinueConfig()">📋 Copy Continue
+              Config</button>
+          </div>
+
+          <div class="status-item" style="flex-direction:column;align-items:flex-start;gap:8px;">
+            <div style="display:flex;align-items:center;gap:8px;font-weight:600;">
+              <span>🌐</span> Official Gemini CLI
+            </div>
+            <div style="font-size:12px;color:var(--text-secondary);">
+              Google Native Endpoint (/v1beta):
+            </div>
+            <div style="display:flex;gap:6px;width:100%;">
+              <input type="text" readonly value="export GOOGLE_GEMINI_BASE_URL=http://localhost:5353" class="vibe-code-input">
+              <button class="btn btn-secondary btn-sm" onclick="copyTextValue('export GOOGLE_GEMINI_BASE_URL=http://localhost:5353\nexport GEMINI_API_KEY=none\ngemini')">📋</button>
+            </div>
+            <div style="font-size:12px;color:var(--text-muted);">
+              Native endpoints: <code>/v1beta/models</code> | Key: <code>none</code>
+            </div>
+          </div>
+
+          <div class="status-item" style="flex-direction:column;align-items:flex-start;gap:8px;">
+            <div style="display:flex;align-items:center;gap:8px;font-weight:600;">
+              <span>⚡</span> OpenAI Codex CLI (/v1/responses)
+            </div>
+            <div style="font-size:12px;color:var(--text-secondary);">
+              Responses API for Codex CLI:
+            </div>
+            <div style="display:flex;gap:6px;width:100%;">
+              <input type="text" readonly value="http://localhost:5353/v1" class="vibe-code-input">
+              <button class="btn btn-secondary btn-sm" onclick="copyTextValue('http://localhost:5353/v1')">📋</button>
+            </div>
+            <div style="font-size:12px;color:var(--text-muted);">
+              Supports full SSE <code>response.*</code> event stream
+            </div>
+          </div>
+
+          <div class="status-item" style="flex-direction:column;align-items:flex-start;gap:8px;">
+            <div style="display:flex;align-items:center;gap:8px;font-weight:600;">
+              <span>🍒</span> Cherry Studio / ChatBox
+            </div>
+            <div style="font-size:12px;color:var(--text-secondary);">
+              Base URL: <code>http://localhost:5353/v1</code>
+            </div>
+            <div style="display:flex;gap:6px;width:100%;">
+              <input type="text" readonly value="gemini-3.5-flash-thinking@think=0" class="vibe-code-input">
+              <button class="btn btn-secondary btn-sm" onclick="copyTextValue('gemini-3.5-flash-thinking@think=0')">📋</button>
+            </div>
+            <div style="font-size:12px;color:var(--text-muted);">
+              Deep Reasoning Output (~20k+ chars) | Key: any or empty
+            </div>
+          </div>
+
+          <div class="status-item" style="flex-direction:column;align-items:flex-start;gap:8px;">
+            <div style="display:flex;align-items:center;gap:8px;font-weight:600;">
+              <span>🤖</span> Aider / CLI
+            </div>
+            <div style="font-size:12px;color:var(--text-secondary);">
+              Terminal command:
+            </div>
+            <button class="btn btn-secondary btn-sm" style="width:100%;"
+              onclick="copyTextValue('aider --openai-api-base http://localhost:5353/v1 --openai-api-key gemini-local --model gemini-2.5-pro')">📋
+              Copy Aider Command</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Built-in Autonomous Coding Agent -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h2>🤖 Supercharged Autonomous Coding Agent (Internet Browsing + Full Workspace Tools)</h2>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">
+              <span class="badge" style="background:rgba(16,185,129,0.15);color:var(--success);padding:3px 8px;border-radius:10px;font-size:11px;border:1px solid rgba(16,185,129,0.3);">🌐 Live Web Search</span>
+              <span class="badge" style="background:rgba(59,130,246,0.15);color:#60a5fa;padding:3px 8px;border-radius:10px;font-size:11px;border:1px solid rgba(59,130,246,0.3);">📄 Web Page Reader</span>
+              <span class="badge" style="background:rgba(245,158,11,0.15);color:#fbbf24;padding:3px 8px;border-radius:10px;font-size:11px;border:1px solid rgba(245,158,11,0.3);">🔍 Codebase Grep</span>
+              <span class="badge" style="background:rgba(139,92,246,0.15);color:#c084fc;padding:3px 8px;border-radius:10px;font-size:11px;border:1px solid rgba(139,92,246,0.3);">📁 File Finder</span>
+              <span class="badge" style="background:rgba(99,102,241,0.15);color:var(--accent);padding:3px 8px;border-radius:10px;font-size:11px;border:1px solid rgba(99,102,241,0.3);">🌳 Project Tree</span>
+              <span class="badge" style="background:rgba(236,72,153,0.15);color:#f472b6;padding:3px 8px;border-radius:10px;font-size:11px;border:1px solid rgba(236,72,153,0.3);">💻 Terminal Runner</span>
+              <span class="badge" style="background:rgba(14,165,233,0.15);color:#38bdf8;padding:3px 8px;border-radius:10px;font-size:11px;border:1px solid rgba(14,165,233,0.3);">📦 Package Installer</span>
+            </div>
+          </div>
+        </div>
+        <form id="vibe-agent-form" onsubmit="startVibeAgent(event)">
+          <div class="form-row" style="grid-template-columns: 2fr 1fr;">
+            <div class="form-group">
+              <label>📁 Workspace Directory</label>
+              <input type="text" id="vibe-workspace" value="." placeholder="Workspace path (e.g. . or F:/my-project)">
+            </div>
+            <div class="form-group">
+              <label>🤖 Model</label>
+              <select id="vibe-model">
+                <option value="unspecified">Auto (default)</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>📝 Coding Task Instruction</label>
+            <textarea id="vibe-task-prompt" rows="3"
+              placeholder="e.g. Create a modern responsive calculator in HTML/CSS/JS, then test and verify it."></textarea>
+            <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+              <button type="button" class="btn btn-secondary btn-sm"
+                onclick="setVibePrompt('Create a modern single-page portfolio website in HTML and CSS with responsive glassmorphic cards and interactive dark mode.')">🌐
+                Portfolio Website</button>
+              <button type="button" class="btn btn-secondary btn-sm"
+                onclick="setVibePrompt('Build a complete Todo App in HTML/JS with localStorage, filters, and animations.')">📝
+                Todo App</button>
+              <button type="button" class="btn btn-secondary btn-sm"
+                onclick="setVibePrompt('Inspect this codebase, review recent files for bugs or performance issues, and suggest improvements.')">🔍
+                Codebase Review</button>
+              <button type="button" class="btn btn-secondary btn-sm"
+                onclick="setVibePrompt('Write unit tests for the core functions in this project and execute them.')">🧪
+                Unit Tests</button>
+              <button type="button" class="btn btn-secondary btn-sm"
+                onclick="setVibePrompt('Search the live internet for latest React 19 documentation and use hook features, then build a modern demo component.')">🌐
+                Search React 19 &amp; Build</button>
+              <button type="button" class="btn btn-secondary btn-sm"
+                onclick="setVibePrompt('Search the web for modern Tailwind CSS v4 or Vite 6 setup guides, inspect our project structure, and write a setup guide.')">📚
+                Web Research &amp; Docs</button>
+            </div>
+          </div>
+          <div style="display:flex;gap:12px;align-items:center;">
+            <button type="submit" class="btn btn-primary" id="vibe-run-btn">⚡ Run Vibe Coding Agent</button>
+            <button type="button" class="btn btn-secondary" id="vibe-stop-btn" style="display:none;"
+              onclick="stopVibeAgent()">⏹️ Stop Agent</button>
+            <span id="vibe-status" style="font-size:13px;color:var(--text-secondary);"></span>
+          </div>
+        </form>
+      </div>
+
+      <!-- Agent Live Execution Feed -->
+      <div class="card" id="vibe-feed-card" style="display:none;">
+        <div class="card-header">
+          <h2>⚡ Live Agent Execution Trace</h2>
+          <span id="vibe-step-badge" class="badge"
+            style="background:rgba(99,102,241,0.15);color:var(--accent);padding:4px 10px;border-radius:12px;font-size:12px;">Step
+            1</span>
+        </div>
+        <div id="vibe-feed-container"
+          style="display:flex;flex-direction:column;gap:12px;max-height:550px;overflow-y:auto;padding:14px;background:var(--bg-secondary);border-radius:8px;">
+          <!-- steps populated here dynamically -->
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== API ENDPOINTS ========== -->
+    <div class="tab-content" id="tab-endpoints">
+      <div class="page-title">🔌 API Endpoints</div>
+      <div class="card">
+        <div class="card-header">
+          <h2>Endpoint Browser</h2>
+          <div class="flex flex-center gap-8">
+            <label style="font-size:13px;color:var(--text-secondary);">Base URL:</label>
+            <select id="base-url-select"
+              style="background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);padding:6px 12px;border-radius:6px;font-size:13px;"
+              onchange="updateEndpoints()">
+              <option value="local">📍 Local</option>
+              <option value="cloudflare">🌐 Cloudflare</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table id="endpoints-table">
+            <thead>
+              <tr>
+                <th>Method</th>
+                <th>Endpoint</th>
+                <th>Description</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="endpoints-body">
+              <!-- populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== SETTINGS ========== -->
+    <div class="tab-content" id="tab-settings">
+      <div class="page-title">⚙️ Settings</div>
+      <div class="card">
+        <div class="card-header">
+          <h2>Configuration</h2>
+        </div>
+        <form id="settings-form" onsubmit="saveSettings(event)">
+          <div class="form-group">
+            <label>🔑 __Secure-1PSID *</label>
+            <input type="text" id="setting-psid" placeholder="Enter your __Secure-1PSID cookie value" required>
+          </div>
+          <div class="form-group">
+            <label>🔑 __Secure-1PSIDTS</label>
+            <input type="text" id="setting-psidts" placeholder="Enter your __Secure-1PSIDTS cookie value (optional)">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>🛡️ API Keys (Optional, comma-separated)</label>
+              <input type="text" id="setting-api-keys" placeholder="Leave empty for Zero-Auth, or: sk-gemini, sk-local">
+            </div>
+            <div class="form-group">
+              <label>🌐 HTTP Proxy (Optional)</label>
+              <input type="text" id="setting-proxy" placeholder="e.g. http://127.0.0.1:7890">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>🤖 Default Model</label>
+              <select id="setting-model">
+                <option value="unspecified">Auto (default)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>🔌 Port</label>
+              <input type="number" id="setting-port" value="5353" min="1024" max="65535">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>🌐 Cloudflare Tunnel</label>
+            <div class="toggle-wrap">
+              <label class="toggle">
+                <input type="checkbox" id="setting-tunnel">
+                <span class="slider"></span>
+              </label>
+              <span class="toggle-label" id="tunnel-label">Disabled</span>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:8px;">
+            <button type="submit" class="btn btn-primary" id="save-btn">
+              💾 Save &amp; Apply
+            </button>
+            <button type="button" class="btn btn-secondary" onclick="loadSettings()">
+              🔄 Reload
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ========== TEST API ========== -->
+    <div class="tab-content" id="tab-test">
+      <div class="page-title">🧪 Test API</div>
+      <div class="card">
+        <div class="card-header">
+          <h2>Chat Completions</h2>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>🤖 Model</label>
+            <select id="test-model">
+              <option value="unspecified">Auto (default)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>🧠 Thinking Depth (@think=N)</label>
+            <select id="test-think" style="background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);padding:8px 12px;border-radius:6px;font-size:13px;width:100%;">
+              <option value="">Default (From Model)</option>
+              <option value="@think=0">@think=0 (Deepest Reasoning ~20k+ chars)</option>
+              <option value="@think=2">@think=2 (Balanced Reasoning)</option>
+              <option value="@think=4">@think=4 (Fast / Shallow)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>📡 Stream</label>
+            <div class="toggle-wrap" style="margin-top:8px;">
+              <label class="toggle">
+                <input type="checkbox" id="test-stream" checked>
+                <span class="slider"></span>
+              </label>
+              <span class="toggle-label">Streaming response</span>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>💬 Prompt</label>
+          <textarea id="test-prompt" placeholder="Enter your prompt here..."
+            rows="4">Hello! What can you do? Give me a brief introduction in 2-3 sentences.</textarea>
+        </div>
+        <div class="form-group">
+          <label>📎 Attach Image (optional)</label>
+          <input type="file" id="test-image" accept="image/*,.pdf,.txt,.py,.js,.html,.css,.json,.md"
+            onchange="previewFile(this)">
+          <div id="file-info" class="text-muted" style="font-size:12px;margin-top:4px;"></div>
+          <img id="test-image-preview"
+            style="max-width:200px;max-height:200px;border-radius:8px;border:1px solid var(--border);margin-top:8px;display:none;">
+        </div>
+        <div style="display:flex;gap:10px;">
+          <button class="btn btn-primary" id="send-btn" onclick="sendTestRequest()">
+            ▶️ Send
+          </button>
+          <button class="btn btn-secondary" id="stop-btn" onclick="stopTestRequest()" disabled>
+            ⏹️ Stop
+          </button>
+          <button class="btn btn-secondary" onclick="clearTestResponse()">
+            🗑️ Clear
+          </button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2>Response</h2>
+          <div class="response-info" id="response-info" style="display:none;">
+            <span>⏱️ <strong id="response-time">0.0</strong>s</span>
+            <span>📝 <strong id="response-tokens">0</strong> chars</span>
+          </div>
+        </div>
+        <div class="response-box" id="response-box">
+          <div class="placeholder">Response will appear here...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== GENERATE IMAGE ========== -->
+    <div class="tab-content" id="tab-generate-image">
+      <div class="page-title">🖼️ Generate Image</div>
+      <div class="card">
+        <div class="card-header">
+          <h2>Image Tool</h2>
+        </div>
+        <form id="generate-image-form" onsubmit="generateImage(event)">
+          <div class="form-group">
+            <label>📝 Prompt</label>
+            <textarea id="image-prompt" placeholder="A cute cat wearing a wizard hat, digital art..."
+              rows="3"></textarea>
+          </div>
+          <div class="form-group">
+            <label>🤖 Model</label>
+            <select id="image-model">
+              <option value="unspecified">Auto (default)</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary" id="generate-image-btn">✨ Generate</button>
+        </form>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <h2>Generated Images</h2>
+        </div>
+        <div class="image-grid" id="image-gallery"></div>
+      </div>
+    </div>
+
+    <!-- ========== GENERATE VIDEO ========== -->
+    <div class="tab-content" id="tab-generate-video">
+      <div class="page-title">🎬 Generate Video</div>
+      <div class="card">
+        <div class="card-header">
+          <h2>Video Tool</h2>
+        </div>
+        <form id="generate-video-form" onsubmit="generateVideo(event)">
+          <div class="form-group">
+            <label>📝 Prompt</label>
+            <textarea id="video-prompt" placeholder="A peaceful ocean sunset with waves..." rows="3"></textarea>
+          </div>
+          <div class="form-group">
+            <label>🤖 Model</label>
+            <select id="video-model">
+              <option value="unspecified">Auto (default)</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary" id="generate-video-btn">🎬 Generate</button>
+        </form>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <h2>Generated Videos</h2>
+        </div>
+        <div id="video-gallery"></div>
+      </div>
+    </div>
+
+    <!-- ========== GENERATE MEDIA ========== -->
+    <div class="tab-content" id="tab-generate-media">
+      <div class="page-title">🎵 Generate Audio/Media</div>
+      <div class="card">
+        <div class="card-header">
+          <h2>Audio Tool</h2>
+        </div>
+        <form id="generate-media-form" onsubmit="generateMedia(event)">
+          <div class="form-group">
+            <label>📝 Prompt</label>
+            <textarea id="media-prompt" placeholder="Upbeat electronic background music at 120bpm..."
+              rows="3"></textarea>
+          </div>
+          <div class="form-group">
+            <label>🤖 Model</label>
+            <select id="media-model">
+              <option value="unspecified">Auto (default)</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary" id="generate-media-btn">🎵 Generate</button>
+        </form>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <h2>Generated Media</h2>
+        </div>
+        <div id="media-gallery"></div>
+      </div>
+    </div>
+
+    <!-- ========== DEEP RESEARCH ========== -->
+    <div class="tab-content" id="tab-deep-research">
+      <div class="page-title">🔬 Deep Research</div>
+      <div class="card">
+        <div class="card-header">
+          <h2>Research Tool</h2>
+        </div>
+        <form id="deep-research-form" onsubmit="startDeepResearch(event)">
+          <div class="form-group">
+            <label>🔍 Research Topic</label>
+            <textarea id="research-prompt" placeholder="What are the health benefits of green tea?..."
+              rows="4"></textarea>
+          </div>
+          <div class="form-group">
+            <label>🤖 Model</label>
+            <select id="research-model">
+              <option value="unspecified">Auto (default)</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary" id="research-btn">🔬 Start Research</button>
+        </form>
+      </div>
+      <div class="card" id="research-result-card" style="display:none;">
+        <div class="card-header">
+          <h2>Research Plan</h2>
+        </div>
+        <div id="research-plan"></div>
+      </div>
+      <div class="card" id="research-result-card-2" style="display:none;">
+        <div class="card-header">
+          <h2>Research Result</h2>
+        </div>
+        <div class="response-box" id="research-response"></div>
+      </div>
+    </div>
+
+    <!-- ========== GEMS ========== -->
+    <div class="tab-content" id="tab-gems">
+      <div class="page-title">💎 Gems (System Prompts)</div>
+      <div class="card">
+        <div class="card-header">
+          <h2>Gems List</h2>
+          <button class="btn btn-secondary btn-sm" onclick="loadGems()">🔄 Refresh</button>
+        </div>
+        <div class="table-wrap">
+          <table id="gems-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Instructions</th>
+              </tr>
+            </thead>
+            <tbody id="gems-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== CHAT HISTORY ========== -->
+    <div class="tab-content" id="tab-chats">
+      <div class="page-title">💬 Chat History</div>
+      <div class="card">
+        <div class="card-header">
+          <h2>Your Chats</h2>
+          <button class="btn btn-secondary btn-sm" onclick="loadChats()">🔄 Refresh</button>
+        </div>
+        <div class="table-wrap">
+          <table id="chats-table">
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Chat ID</th>
+                <th>Pinned</th>
+                <th>Timestamp</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="chats-body"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card" id="chat-detail-card" style="display:none;">
+        <div class="card-header">
+          <h2 id="chat-detail-title">Chat</h2>
+          <button class="btn btn-danger btn-sm" onclick="deleteCurrentChat()">🗑️ Delete</button>
+        </div>
+        <div id="chat-detail-body"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Code Modal -->
+  <div class="modal-overlay" id="code-modal">
+    <div class="modal">
+      <button class="modal-close" onclick="closeCodeModal()">✕</button>
+      <h3 id="modal-title">Code Example</h3>
+      <pre id="modal-code"></pre>
+      <div style="margin-top:12px;">
+        <button class="btn btn-primary btn-sm" onclick="copyModalCode()">📋 Copy Code</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <script>
+    // ======================== STATE ========================
+    let currentAbortController = null;
+    let streamActive = false;
+    const BASE = '';
+    const getLocalBase = () => {
+      const proto = window.location.protocol;
+      const host = window.location.hostname;
+      const port = window.location.port ? `:${window.location.port}` : '';
+      return `${proto}//${host}${port}`;
+    };
+    let configCache = { local_url: getLocalBase(), tunnel_url: null };
+
+    // ======================== ENDPOINTS DATA ========================
+    const ENDPOINTS = [
+      { method: 'GET', path: '/health', desc: 'Server status check' },
+      { method: 'GET', path: '/v1/models', desc: 'Available models list (with OpenAI aliases)' },
+      { method: 'POST', path: '/v1/chat/completions', desc: 'Chat (OpenAI compatible, tool calling, streaming)' },
+      { method: 'POST', path: '/v1/chat/completions/session', desc: 'Stateful multi-turn chat' },
+      { method: 'POST', path: '/v1/agent/task', desc: 'Autonomous coding agent task runner (SSE stream)' },
+      { method: 'GET', path: '/v1/agent/tools', desc: 'List available agent tools' },
+      { method: 'POST', path: '/v1/embeddings', desc: 'Text embeddings for codebase indexing' },
+      { method: 'POST', path: '/v1/images/generate', desc: 'Generate image' },
+      { method: 'POST', path: '/v1/videos/generate', desc: 'Generate video' },
+      { method: 'POST', path: '/v1/media/generate', desc: 'Generate audio/music' },
+      { method: 'POST', path: '/v1/files/analyze', desc: 'Analyze files/images' },
+      { method: 'POST', path: '/v1/deep-research', desc: 'Deep research' },
+      { method: 'GET', path: '/v1/gems', desc: 'List gems (system prompts)' },
+      { method: 'GET', path: '/v1/chats', desc: 'List chat history' },
+      { method: 'GET', path: '/v1/chats/{cid}', desc: 'Read chat history' },
+      { method: 'DELETE', path: '/v1/chats/{cid}', desc: 'Delete chat' },
+      { method: 'POST', path: '/config/update', desc: 'Update settings' },
+      { method: 'GET', path: '/config/status', desc: 'Current configuration status' },
+    ];
+
+    const CODE_EXAMPLES = {
+      '/health': `# Check server health\ncurl http://localhost:5353/health`,
+      '/v1/models': `# List available models\ncurl http://localhost:5353/v1/models`,
+      '/v1/chat/completions': `# Chat completion (OpenAI compatible, works with Cursor, Cline, Kilo Code)
+curl -X POST http://localhost:5353/v1/chat/completions \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "model": "gemini-2.5-pro",
+    "messages": [
+      {"role": "user", "content": "Write a python script to parse CSV files."}
+    ],
+    "stream": false
+  }'`,
+      '/v1/chat/completions/session': `# Multi-turn chat session
+curl -X POST http://localhost:5353/v1/chat/completions/session \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "model": "gemini-2.5-pro",
+    "messages": [
+      {"role": "user", "content": "Tell me a short story"}
+    ],
+    "stream": false
+  }'`,
+      '/v1/agent/task': `# Autonomous coding agent task runner (SSE stream)
+curl -X POST http://localhost:5353/v1/agent/task \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "prompt": "Create a responsive landing page and verify it.",
+    "workspace": ".",
+    "model": "gemini-2.5-pro",
+    "max_steps": 25
+  }'`,
+      '/v1/agent/tools': `# List autonomous agent workspace tools
+curl http://localhost:5353/v1/agent/tools`,
+      '/v1/embeddings': `# Embeddings for codebase indexing (Cursor / Continue.dev)
+curl -X POST http://localhost:5353/v1/embeddings \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "input": "def calculate_total(items): return sum(items)",
+    "model": "text-embedding-ada-002"
+  }'`,
+      '/v1/images/generate': `# Generate an image
+curl -X POST http://localhost:5353/v1/images/generate \\
+  -F "prompt=A cute cat wearing a hat"`,
+      '/v1/videos/generate': `# Generate a video
+curl -X POST http://localhost:5353/v1/videos/generate \\
+  -F "prompt=A peaceful ocean sunset"`,
+      '/v1/media/generate': `# Generate audio/music
+curl -X POST http://localhost:5353/v1/media/generate \\
+  -F "prompt=Upbeat electronic background music"`,
+      '/v1/files/analyze': `# Analyze a file/image
+curl -X POST http://localhost:5353/v1/files/analyze \\
+  -F "prompt=Describe this image in detail" \\
+  -F "file=@path/to/your/image.jpg"`,
+      '/v1/deep-research': `# Deep research
+curl -X POST http://localhost:5353/v1/deep-research \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "prompt": "What are the health benefits of green tea?",
+    "model": "gemini-2.5-pro"
+  }'`,
+      '/v1/gems': `# List gems (system prompts)
+curl http://localhost:5353/v1/gems`,
+      '/v1/chats': `# List chat history
+curl http://localhost:5353/v1/chats`,
+      'GET:/v1/chats/{cid}': `# Read chat history
+curl "http://localhost:5353/v1/chats/{cid}"`,
+      'DELETE:/v1/chats/{cid}': `# Delete chat
+curl -X DELETE http://localhost:5353/v1/chats/{cid}'`,
+      '/config/update': `# Update configuration
+curl -X POST http://localhost:5353/config/update \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "psid": "YOUR_PSID",
+    "psidts": "YOUR_PSIDTS",
+    "model": "gemini-2.5-pro",
+    "cloudflare_tunnel": false
+  }'`,
+      '/config/status': `# Get configuration status
+curl http://localhost:5353/config/status`
+    };
+
+    // ======================== SIDEBAR NAV ========================
+    document.querySelectorAll('.nav-item').forEach(item => {
+      item.addEventListener('click', () => {
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        item.classList.add('active');
+        switchTab(item.dataset.tab);
+      });
+    });
+
+    // ======================== TOAST ========================
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${type}`;
+      const icons = { success: '✅', error: '❌', info: 'ℹ️' };
+      toast.innerHTML = `
+    <span>${icons[type] || 'ℹ️'}</span>
+    <span>${message}</span>
+    <button class="toast-close" onclick="this.parentElement.remove()">✕</button>
+  `;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(100%)';
+        toast.style.transition = 'all 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+      }, 5000);
+    }
+
+    // ======================== DASHBOARD ========================
+    async function refreshDashboard() {
+      const serverDot = document.getElementById('server-dot');
+      const serverStatus = document.getElementById('server-status');
+      const geminiDot = document.getElementById('gemini-dot');
+      const geminiStatus = document.getElementById('gemini-status');
+      const localUrl = document.getElementById('local-url');
+      const tunnelUrl = document.getElementById('tunnel-url');
+      document.getElementById('last-refresh').textContent = '⟳ refreshing...';
+
+      try {
+        const res = await fetch('/health');
+        const data = await res.json();
+        serverDot.className = 'status-dot online';
+        serverStatus.textContent = '🟢 Online';
+        geminiDot.className = data.gemini_ready ? 'status-dot online' : 'status-dot offline';
+        geminiStatus.textContent = data.gemini_ready ? '🟢 Connected' : '🔴 Not connected';
+        const port = (data.port && data.port !== 80) ? `:${data.port}` : '';
+        localUrl.textContent = data.local_url || `${getLocalBase()}${port}`;
+        tunnelUrl.textContent = data.tunnel_url || '🚫 Not connected (enable in Settings)';
+        tunnelUrl.style.color = data.tunnel_url ? 'var(--text-primary)' : 'var(--text-muted)';
+        configCache.local_url = data.local_url || `${getLocalBase()}${port}`;
+        configCache.tunnel_url = data.tunnel_url;
+        document.getElementById('last-refresh').textContent = `✓ last updated ${new Date().toLocaleTimeString()}`;
+      } catch (e) {
+        serverDot.className = 'status-dot offline';
+        serverStatus.textContent = '🔴 Offline';
+        geminiDot.className = 'status-dot offline';
+        geminiStatus.textContent = '🔴 N/A';
+        document.getElementById('last-refresh').textContent = `✗ refresh failed (${new Date().toLocaleTimeString()})`;
+      }
+    }
+
+    // Auto-refresh dashboard every 5s
+    setInterval(refreshDashboard, 5000);
+    refreshDashboard();
+
+    // ======================== COPY ========================
+    function copyText(elementId) {
+      const el = document.getElementById(elementId);
+      const text = el.textContent.trim();
+      if (text.includes('Not connected') || text.includes('Not configured')) {
+        showToast('Nothing to copy', 'error');
+        return;
+      }
+      navigator.clipboard.writeText(text).then(() => {
+        showToast('Copied to clipboard!', 'success');
+      }).catch(() => {
+        // Fallback
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        textarea.remove();
+        showToast('Copied to clipboard!', 'success');
+      });
+    }
+
+    // ======================== API ENDPOINTS ========================
+    function getBaseUrl() {
+      const sel = document.getElementById('base-url-select');
+      if (sel.value === 'cloudflare' && configCache.tunnel_url) {
+        return configCache.tunnel_url;
+      }
+      return configCache.local_url || getLocalBase();
+    }
+
+    function updateEndpoints() {
+      const base = getBaseUrl();
+      const tbody = document.getElementById('endpoints-body');
+      tbody.innerHTML = ENDPOINTS.map(ep => {
+        const fullUrl = base + ep.path;
+        const methodClass = `method-${ep.method.toLowerCase()}`;
+        const codeKey = `${ep.method}:${ep.path}`;
+        const codeExample = CODE_EXAMPLES[codeKey] || `# ${ep.method} ${ep.path}\ncurl -X ${ep.method} ${fullUrl}`;
+        return `<tr>
+      <td><span class="method-badge ${methodClass}">${ep.method}</span></td>
+      <td><span class="endpoint-path">${ep.path}</span></td>
+      <td class="text-muted">${ep.desc}</td>
+      <td>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="btn btn-secondary btn-sm" onclick="copyEndpointUrl('${fullUrl}')">📋 Copy</button>
+          <button class="btn btn-secondary btn-sm" onclick="showCodeExample('${ep.method} ${ep.path}', \`${codeExample.replace(/`/g, '\\`')}\`)">📄 Code</button>
+        </div>
+      </td>
+    </tr>`;
+      }).join('');
+      // Update all copy buttons in endpoints
+    }
+
+    function copyEndpointUrl(url) {
+      navigator.clipboard.writeText(url).then(() => {
+        showToast('URL copied to clipboard!', 'success');
+      });
+    }
+
+    function showCodeExample(title, code) {
+      document.getElementById('modal-title').textContent = `Example: ${title}`;
+      document.getElementById('modal-code').textContent = code;
+      document.getElementById('code-modal').classList.add('show');
+      window.currentModalCode = code;
+    }
+
+    function closeCodeModal() {
+      document.getElementById('code-modal').classList.remove('show');
+    }
+
+    function copyModalCode() {
+      const code = window.currentModalCode || '';
+      navigator.clipboard.writeText(code).then(() => {
+        showToast('Code copied to clipboard!', 'success');
+      });
+    }
+
+    // Close modal on overlay click
+    document.getElementById('code-modal').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) closeCodeModal();
+    });
+
+    // ======================== SETTINGS ========================
+    async function loadSettings() {
+      try {
+        const res = await fetch('/config/status');
+        if (!res.ok) throw new Error('Failed to load settings');
+        const data = await res.json();
+
+        document.getElementById('setting-port').value = data.port || '5353';
+        document.getElementById('setting-tunnel').checked = !!data.tunnel_url;
+        document.getElementById('setting-api-keys').value = (data.api_keys || []).join(', ');
+        document.getElementById('setting-proxy').value = data.proxy || '';
+        document.getElementById('tunnel-label').textContent = data.tunnel_url ? 'Enabled' : 'Disabled';
+
+        // Load model list
+        await loadModelsDropdown('setting-model');
+        if (data.model) {
+          document.getElementById('setting-model').value = data.model;
+        }
+      } catch (e) {
+        console.warn('Could not load settings:', e);
+      }
+    }
+
+    async function loadModelsDropdown(selectId) {
+      const select = document.getElementById(selectId);
+      try {
+        const res = await fetch('/v1/models');
+        if (!res.ok) throw new Error('Failed to load models');
+        const data = await res.json();
+        const models = data.data || [];
+        select.innerHTML = '<option value="unspecified">Auto (default)</option>';
+        models.forEach(m => {
+          const opt = document.createElement('option');
+          opt.value = m.id;
+          opt.textContent = m.id;
+          select.appendChild(opt);
+        });
+      } catch (e) {
+        // Keep default options
+      }
+    }
+
+    async function saveSettings(event) {
+      event.preventDefault();
+      const btn = document.getElementById('save-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Saving...';
+
+      const psid = document.getElementById('setting-psid').value.trim();
+      const psidts = document.getElementById('setting-psidts').value.trim();
+      const model = document.getElementById('setting-model').value;
+      const port = parseInt(document.getElementById('setting-port').value) || 5353;
+      const tunnel = document.getElementById('setting-tunnel').checked;
+      const rawKeys = document.getElementById('setting-api-keys').value.trim();
+      const api_keys = rawKeys ? rawKeys.split(',').map(k => k.trim()).filter(Boolean) : [];
+      const proxy = document.getElementById('setting-proxy').value.trim() || null;
+
+      if (!psid) {
+        showToast('Please enter your __Secure-1PSID cookie', 'error');
+        btn.disabled = false;
+        btn.innerHTML = '💾 Save & Apply';
+        return;
+      }
+
+      try {
+        const res = await fetch('/config/update', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ psid, psidts, port, model, cloudflare_tunnel: tunnel, api_keys, proxy })
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.detail || 'Failed to update');
+        }
+        const data = await res.json();
+        showToast(data.message || 'Settings saved successfully! Server restart may be needed.', 'success');
+        // Refresh dashboard
+        setTimeout(refreshDashboard, 1000);
+      } catch (e) {
+        showToast('Error: ' + e.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '💾 Save & Apply';
+      }
+    }
+
+    document.getElementById('setting-tunnel').addEventListener('change', function () {
+      document.getElementById('tunnel-label').textContent = this.checked ? 'Enabled' : 'Disabled';
+    });
+
+    // Load settings on tab switch
+    loadSettings();
+    loadModelsDropdown('test-model');
+
+    // ======================== TEST API ========================
+    const fileInput = document.getElementById('test-image');
+    fileInput.addEventListener('change', function () {
+      const info = document.getElementById('file-info');
+      if (this.files.length > 0) {
+        info.textContent = `📎 ${this.files[0].name} (${(this.files[0].size / 1024).toFixed(1)} KB)`;
+      } else {
+        info.textContent = '';
+      }
+    });
+
+    let testStartTime = 0;
+
+    async function sendTestRequest() {
+      if (streamActive) return;
+
+      const prompt = document.getElementById('test-prompt').value.trim();
+      if (!prompt) {
+        showToast('Please enter a prompt', 'error');
+        return;
+      }
+
+      let model = document.getElementById('test-model').value;
+      const thinkVal = document.getElementById('test-think')?.value || '';
+      if (thinkVal && !model.includes('@think=')) model += thinkVal;
+      const useStream = document.getElementById('test-stream').checked;
+      const file = document.getElementById('test-image').files[0];
+
+      streamActive = true;
+      document.getElementById('send-btn').disabled = true;
+      document.getElementById('stop-btn').disabled = false;
+      document.getElementById('response-info').style.display = 'none';
+
+      const responseBox = document.getElementById('response-box');
+      responseBox.innerHTML = '<div class="placeholder stream-cursor">Waiting for response...</div>';
+
+      currentAbortController = new AbortController();
+      testStartTime = performance.now();
+
+      try {
+        if (file) {
+          // Use file upload endpoint for file analysis
+          if (useStream) {
+            await sendStreamingFileRequest(prompt, file, model, currentAbortController.signal);
+          } else {
+            await sendFileRequest(prompt, file, model, currentAbortController.signal);
+          }
+        } else {
+          if (useStream) {
+            await sendStreamingRequest(prompt, model, currentAbortController.signal);
+          } else {
+            await sendNonStreamingRequest(prompt, model, currentAbortController.signal);
+          }
+        }
+      } catch (e) {
+        if (e.name === 'AbortError') {
+          responseBox.innerHTML += '\n\n⏹️ Request stopped by user.';
+        } else {
+          responseBox.innerHTML += '\n\n❌ Error: ' + e.message;
+          showToast('Request failed: ' + e.message, 'error');
+        }
+      } finally {
+        streamActive = false;
+        document.getElementById('send-btn').disabled = false;
+        document.getElementById('stop-btn').disabled = true;
+        currentAbortController = null;
+        const elapsed = ((performance.now() - testStartTime) / 1000).toFixed(1);
+        document.getElementById('response-time').textContent = elapsed;
+        document.getElementById('response-info').style.display = 'flex';
+      }
+    }
+
+
+    async function sendFileRequest(prompt, file, model, signal) {
+      const formData = new FormData();
+      formData.append('prompt', prompt);
+      formData.append('file', file);
+      const res = await fetch('/v1/files/analyze', {
+        method: 'POST',
+        body: formData,
+        signal
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || `HTTP ${res.status}`);
+      }
+      const data = await res.json();
+      const content = data.text || JSON.stringify(data, null, 2);
+      const responseBox = document.getElementById('response-box');
+      let html = '<div style="margin-bottom:12px;">' + escapeHtml(content) + '</div>';
+      if (data.images && data.images.length) {
+        html += '<div class="section-title">🖼️ Images</div><div class="image-grid">';
+        data.images.forEach(img => {
+          const src = img.url || `/outputs/${img.image_id}`;
+          html += `<img src="${src}" alt="${escapeHtml(img.alt || img.title || '')}" onclick="window.open('${src}', '_blank')">`;
+        });
+        html += '</div>';
+      }
+      if (data.thoughts) {
+        html += `<details class="thoughts-box"><summary>💭 Thoughts</summary>${escapeHtml(data.thoughts)}</details>`;
+      }
+      responseBox.innerHTML = html;
+      document.getElementById('response-tokens').textContent = content.length;
+    }
+
+    async function sendStreamingFileRequest(prompt, file, model, signal) {
+      const formData = new FormData();
+      formData.append('prompt', `[File attached: ${file.name}]\n\n${prompt}`);
+      formData.append('file', file);
+      const res = await fetch('/v1/files/analyze', {
+        method: 'POST',
+        body: formData,
+        signal
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || `HTTP ${res.status}`);
+      }
+      const data = await res.json();
+      const content = data.text || JSON.stringify(data, null, 2);
+      const responseBox = document.getElementById('response-box');
+      let html = '<div style="margin-bottom:12px;">' + escapeHtml(content) + '</div>';
+      if (data.images && data.images.length) {
+        html += '<div class="section-title">🖼️ Images</div><div class="image-grid">';
+        data.images.forEach(img => {
+          const src = img.url || `/outputs/${img.image_id}`;
+          html += `<img src="${src}" alt="${escapeHtml(img.alt || img.title || '')}" onclick="window.open('${src}', '_blank')">`;
+        });
+        html += '</div>';
+      }
+      if (data.thoughts) {
+        html += `<details class="thoughts-box"><summary>💭 Thoughts</summary>${escapeHtml(data.thoughts)}</details>`;
+      }
+      responseBox.innerHTML = html;
+      document.getElementById('response-tokens').textContent = content.length;
+    }
+
+
+    // ======================== UTILS ========================
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Image preview for attachment
+    function previewFile(input) {
+      const preview = document.getElementById('test-image-preview');
+      const file = input.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          preview.src = e.target.result;
+          preview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      } else {
+        preview.style.display = 'none';
+      }
+    }
+
+    // Render multimodal response
+    function renderMultimodalResponse(data, responseBox) {
+      const message = data.choices?.[0]?.message || {};
+      const content = message.content || '';
+      const gemini = message._gemini || {};
+
+      let html = '';
+      if (content) {
+        html += `<div style="margin-bottom:12px;">${escapeHtml(content)}</div>`;
+      }
+
+      if (gemini.images && gemini.images.length) {
+        html += '<div class="section-title">🖼️ Images</div><div class="image-grid">';
+        gemini.images.forEach(img => {
+          const src = img.url || (img.image_id ? `/outputs/${img.image_id}` : '');
+          html += `<img src="${src}" alt="${escapeHtml(img.alt || img.title || '')}" onclick="window.open('${src}', '_blank')">`;
+        });
+        html += '</div>';
+      }
+
+      if (gemini.videos && gemini.videos.length) {
+        html += '<div class="section-title">🎬 Videos</div>';
+        gemini.videos.forEach(v => {
+          html += `<div class="media-preview"><video controls src="${v.url}"></video></div>`;
+        });
+      }
+
+      if (gemini.media && gemini.media.length) {
+        html += '<div class="section-title">🎵 Media</div>';
+        gemini.media.forEach(m => {
+          if (m.url.endsWith('.mp3') || m.mp3_url) {
+            html += `<div class="media-preview"><audio controls src="${m.mp3_url || m.url}"></audio></div>`;
+          } else {
+            html += `<div class="media-preview"><a href="${m.url}" target="_blank">📁 ${escapeHtml(m.url)}</a></div>`;
+          }
+        });
+      }
+
+      if (gemini.thoughts) {
+        html += `<details class="thoughts-box"><summary>💭 Thoughts</summary>${escapeHtml(gemini.thoughts)}</details>`;
+      }
+
+      if (gemini.deep_research_plan) {
+        const plan = gemini.deep_research_plan;
+        html += '<div class="section-title">🔬 Research Plan</div>';
+        html += `<h3>${escapeHtml(plan.title || '')}</h3>`;
+        if (plan.steps) {
+          html += '<ul>' + plan.steps.map(s => `<li>${escapeHtml(s)}</li>`).join('') + '</ul>';
+        }
+      }
+
+      responseBox.innerHTML = html || escapeHtml(content || JSON.stringify(data, null, 2));
+    }
+
+    // Update sendNonStreamingRequest to render multimodal
+    async function sendNonStreamingRequest(prompt, model, signal) {
+      const res = await fetch('/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model,
+          messages: [{ role: 'user', content: prompt }],
+          stream: false
+        }),
+        signal
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || `HTTP ${res.status}`);
+      }
+      const data = await res.json();
+      const responseBox = document.getElementById('response-box');
+      renderMultimodalResponse(data, responseBox);
+      const content = data.choices?.[0]?.message?.content || '';
+      document.getElementById('response-tokens').textContent = content.length;
+    }
+
+    // Update sendStreamingRequest for multimodal streaming
+    async function sendStreamingRequest(prompt, model, signal) {
+      const res = await fetch('/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model,
+          messages: [{ role: 'user', content: prompt }],
+          stream: true
+        }),
+        signal
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || `HTTP ${res.status}`);
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      const responseBox = document.getElementById('response-box');
+      responseBox.innerHTML = '<span class="stream-cursor"></span>';
+      let fullText = '';
+      let images = [];
+      let thoughts = null;
+      let lastThoughts = '';
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6).trim();
+            if (data === '[DONE]') continue;
+            try {
+              const parsed = JSON.parse(data);
+              const delta = parsed.choices?.[0]?.delta?.content || '';
+              if (delta) fullText += delta;
+              const gemini = parsed._gemini || {};
+              if (gemini.images) images = gemini.images;
+              if (gemini.thoughts) thoughts = gemini.thoughts;
+            } catch (e) {
+              // skip parse errors
+            }
+          }
+        }
+        // Live render during stream
+        let html = escapeHtml(fullText) + '<span class="stream-cursor"></span>';
+        if (images.length) {
+          html += '<div class="section-title">🖼️ Images</div><div class="image-grid">';
+          images.forEach(img => {
+            const src = img.url || (img.image_id ? `/outputs/${img.image_id}` : '');
+            html += `<img src="${src}" alt="${escapeHtml(img.alt || img.title || '')}" onclick="window.open('${src}', '_blank')">`;
+          });
+          html += '</div>';
+        }
+        if (thoughts && thoughts !== lastThoughts) {
+          lastThoughts = thoughts;
+          html += `<details class="thoughts-box"><summary>💭 Thoughts</summary>${escapeHtml(thoughts)}</details>`;
+        }
+        responseBox.innerHTML = html;
+        responseBox.scrollTop = responseBox.scrollHeight;
+      }
+
+      let finalHtml = escapeHtml(fullText);
+      if (images.length) {
+        finalHtml += '<div class="section-title">🖼️ Images</div><div class="image-grid">';
+        images.forEach(img => {
+          const src = img.url || (img.image_id ? `/outputs/${img.image_id}` : '');
+          finalHtml += `<img src="${src}" alt="${escapeHtml(img.alt || img.title || '')}" onclick="window.open('${src}', '_blank')">`;
+        });
+        finalHtml += '</div>';
+      }
+      if (thoughts) {
+        finalHtml += `<details class="thoughts-box"><summary>💭 Thoughts</summary>${escapeHtml(thoughts)}</details>`;
+      }
+      responseBox.innerHTML = finalHtml;
+      document.getElementById('response-tokens').textContent = fullText.length;
+    }
+
+    function stopTestRequest() {
+      if (currentAbortController) {
+        currentAbortController.abort();
+      }
+    }
+
+    function clearTestResponse() {
+      const responseBox = document.getElementById('response-box');
+      responseBox.innerHTML = '<div class="placeholder">Response will appear here...</div>';
+      document.getElementById('response-info').style.display = 'none';
+      document.getElementById('test-image').value = '';
+      document.getElementById('file-info').textContent = '';
+      document.getElementById('test-image-preview').style.display = 'none';
+    }
+
+    // ======================== GENERATE IMAGE ========================
+    async function generateImage(event) {
+      event.preventDefault();
+      const btn = document.getElementById('generate-image-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Generating...';
+
+      const formData = new FormData();
+      formData.append('prompt', document.getElementById('image-prompt').value);
+      formData.append('model', document.getElementById('image-model').value);
+
+      try {
+        const res = await fetch('/v1/images/generate', { method: 'POST', body: formData });
+        if (!res.ok) throw new Error((await res.json()).detail || 'Failed');
+        const data = await res.json();
+        const gallery = document.getElementById('image-gallery');
+        gallery.innerHTML = '';
+        if (data.images && data.images.length) {
+          data.images.forEach(img => {
+            const src = img.url || `/outputs/${img.image_id}`;
+            const div = document.createElement('div');
+            div.innerHTML = `<img src="${src}" alt="${escapeHtml(img.alt || '')}" onclick="window.open('${src}', '_blank')">`;
+            gallery.appendChild(div);
+          });
+          showToast('Image generated successfully!', 'success');
+        } else {
+          const textMsg = (data.text || '').trim();
+          gallery.innerHTML = `<div class="text-muted">${textMsg ? escapeHtml(textMsg) : 'No images returned'}</div>`;
+          showToast('No image generated. Try a more descriptive prompt.', 'warning');
+        }
+        if (data.text) {
+          const textBox = document.getElementById('image-text');
+          if (textBox) textBox.textContent = data.text;
+        }
+      } catch (e) {
+        showToast('Error: ' + e.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '✨ Generate';
+      }
+    }
+
+    // ======================== GENERATE VIDEO ========================
+    async function generateVideo(event) {
+      event.preventDefault();
+      const btn = document.getElementById('generate-video-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Generating...';
+
+      const formData = new FormData();
+      formData.append('prompt', document.getElementById('video-prompt').value);
+      formData.append('model', document.getElementById('video-model').value);
+
+      try {
+        const res = await fetch('/v1/videos/generate', { method: 'POST', body: formData });
+        if (!res.ok) throw new Error((await res.json()).detail || 'Failed');
+        const data = await res.json();
+        const gallery = document.getElementById('video-gallery');
+        gallery.innerHTML = '';
+        if (data.videos && data.videos.length) {
+          data.videos.forEach(v => {
+            const div = document.createElement('div');
+            div.className = 'media-preview';
+            div.innerHTML = `<video controls src="${v.url}" style="width:100%;border-radius:var(--radius-sm);"></video>`;
+            gallery.appendChild(div);
+          });
+        } else {
+          gallery.innerHTML = '<div class="text-muted">No videos returned</div>';
+        }
+        showToast('Video generated!', 'success');
+      } catch (e) {
+        showToast('Error: ' + e.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '🎬 Generate';
+      }
+    }
+
+    // ======================== GENERATE MEDIA ========================
+    async function generateMedia(event) {
+      event.preventDefault();
+      const btn = document.getElementById('generate-media-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Generating...';
+
+      const formData = new FormData();
+      formData.append('prompt', document.getElementById('media-prompt').value);
+      formData.append('model', document.getElementById('media-model').value);
+
+      try {
+        const res = await fetch('/v1/media/generate', { method: 'POST', body: formData });
+        if (!res.ok) throw new Error((await res.json()).detail || 'Failed');
+        const data = await res.json();
+        const gallery = document.getElementById('media-gallery');
+        gallery.innerHTML = '';
+        if (data.media && data.media.length) {
+          data.media.forEach(m => {
+            const div = document.createElement('div');
+            div.className = 'media-preview';
+            if (m.url.endsWith('.mp3') || m.mp3_url) {
+              div.innerHTML = `<p class="text-muted">${escapeHtml(m.url)}</p><audio controls src="${m.mp3_url || m.url}" style="width:100%;"></audio>`;
+            } else {
+              div.innerHTML = `<a href="${m.url}" target="_blank" class="text-muted">📁 ${escapeHtml(m.url)}</a>`;
+            }
+            gallery.appendChild(div);
+          });
+        } else {
+          gallery.innerHTML = '<div class="text-muted">No media returned</div>';
+        }
+        showToast('Media generated!', 'success');
+      } catch (e) {
+        showToast('Error: ' + e.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '🎵 Generate';
+      }
+    }
+
+    // ======================== DEEP RESEARCH ========================
+    async function startDeepResearch(event) {
+      event.preventDefault();
+      const btn = document.getElementById('research-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Researching...';
+      document.getElementById('research-plan').innerHTML = '';
+      document.getElementById('research-response').innerHTML = '';
+      document.getElementById('research-result-card').style.display = 'block';
+      document.getElementById('research-result-card-2').style.display = 'block';
+
+      try {
+        const res = await fetch('/v1/deep-research', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            prompt: document.getElementById('research-prompt').value,
+            model: document.getElementById('research-model').value
+          })
+        });
+        if (!res.ok) throw new Error((await res.json()).detail || 'Failed');
+        const data = await res.json();
+
+        if (data.deep_research_plan) {
+          const plan = data.deep_research_plan;
+          let html = `<h3>${escapeHtml(plan.title || '')}</h3>`;
+          if (plan.steps && plan.steps.length) {
+            html += '<ul>' + plan.steps.map(s => `<li>${escapeHtml(s)}</li>`).join('') + '</ul>';
+          }
+          document.getElementById('research-plan').innerHTML = html;
+        }
+
+        document.getElementById('research-response').textContent = data.text || 'No text content';
+        showToast('Research complete!', 'success');
+      } catch (e) {
+        showToast('Error: ' + e.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '🔬 Start Research';
+      }
+    }
+
+    // ======================== GEMS ========================
+    async function loadGems() {
+      try {
+        const res = await fetch('/v1/gems');
+        if (!res.ok) throw new Error('Failed');
+        const data = await res.json();
+        const tbody = document.getElementById('gems-body');
+        tbody.innerHTML = '';
+        const gems = data.data || [];
+        if (!gems.length) {
+          tbody.innerHTML = '<tr><td colspan="3" class="text-muted">No gems found</td></tr>';
+          return;
+        }
+        gems.forEach(g => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td><strong>${escapeHtml(g.display_name)}</strong><br><small class="text-muted">${escapeHtml(g.id)}</small></td>
+        <td>${escapeHtml(g.description || '')}</td>
+        <td><code style="font-size:12px;">${escapeHtml(g.instructions || '')}</code></td>`;
+          tbody.appendChild(tr);
+        });
+      } catch (e) {
+        showToast('Error loading gems: ' + e.message, 'error');
+      }
+    }
+
+    // ======================== CHAT HISTORY ========================
+    let currentChatCid = null;
+
+    async function loadChats() {
+      try {
+        const res = await fetch('/v1/chats');
+        if (!res.ok) throw new Error('Failed');
+        const data = await res.json();
+        const tbody = document.getElementById('chats-body');
+        tbody.innerHTML = '';
+        const chats = data.data || [];
+        if (!chats.length) {
+          tbody.innerHTML = '<tr><td colspan="5" class="text-muted">No chats found</td></tr>';
+          return;
+        }
+        chats.forEach(c => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td><strong>${escapeHtml(c.title || 'Untitled')}</strong></td>
+        <td><code style="font-size:12px;">${escapeHtml(c.cid)}</code></td>
+        <td>${c.is_pinned ? '📌 Pinned' : ''}</td>
+        <td>${c.timestamp ? new Date(c.timestamp).toLocaleString() : ''}</td>
+        <td><button class="btn btn-secondary btn-sm" onclick="readChat('${c.cid}')">📖 Read</button></td>`;
+          tbody.appendChild(tr);
+        });
+      } catch (e) {
+        showToast('Error loading chats: ' + e.message, 'error');
+      }
+    }
+
+    async function readChat(cid) {
+      try {
+        const res = await fetch(`/v1/chats/${cid}`);
+        if (!res.ok) throw new Error('Failed');
+        const data = await res.json();
+        const body = document.getElementById('chat-detail-body');
+        document.getElementById('chat-detail-title').textContent = `Chat: ${cid}`;
+        document.getElementById('chat-detail-card').style.display = 'block';
+        currentChatCid = cid;
+
+        const turns = data.turns || [];
+        let html = '';
+        turns.forEach(t => {
+          const roleLabel = t.role === 'user' ? '👤 User' : '🤖 Assistant';
+          let content = t.text || '';
+          if (t.images && t.images.length) {
+            content += '<br><div class="image-grid">' + t.images.map(i => {
+              const src = i.url || `/outputs/${i.image_id}`;
+              return `<img src="${src}" alt="" style="max-height:150px;">`;
+            }).join('') + '</div>';
+          }
+          html += `<div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:8px;">
+        <strong>${roleLabel}</strong><br>${escapeHtml(content)}</div>`;
+        });
+        body.innerHTML = html || '<div class="text-muted">No messages in this chat.</div>';
+      } catch (e) {
+        showToast('Error reading chat: ' + e.message, 'error');
+      }
+    }
+
+    async function deleteCurrentChat() {
+      if (!currentChatCid) return;
+      if (!confirm('Delete this chat?')) return;
+      try {
+        const res = await fetch(`/v1/chats/${currentChatCid}`, { method: 'DELETE' });
+        if (!res.ok) throw new Error('Failed');
+        document.getElementById('chat-detail-card').style.display = 'none';
+        loadChats();
+        showToast('Chat deleted', 'success');
+      } catch (e) {
+        showToast('Error: ' + e.message, 'error');
+      }
+    }
+
+    // ======================== VIBE CODING CONTROLLER ========================
+    let vibeAbortController = null;
+
+    function setVibePrompt(text) {
+      document.getElementById('vibe-task-prompt').value = text;
+    }
+
+    function copyTextValue(val) {
+      navigator.clipboard.writeText(val).then(() => {
+        showToast('Copied to clipboard!', 'success');
+      }).catch(() => {
+        showToast('Failed to copy', 'error');
+      });
+    }
+
+    function copyContinueConfig() {
+      const cfg = {
+        models: [
+          {
+            title: "Local Gemini (Vibe Coding)",
+            provider: "openai",
+            model: "gemini-pro",
+            apiBase: "http://localhost:5353/v1",
+            apiKey: "sk-gemini"
+          }
+        ],
+        tabAutocompleteModel: {
+          title: "Local Gemini Flash",
+          provider: "openai",
+          model: "gemini-flash",
+          apiBase: "http://localhost:5353/v1",
+          apiKey: "sk-gemini"
+        }
+      };
+      copyTextValue(JSON.stringify(cfg, null, 2));
+    }
+
+    async function startVibeAgent(event) {
+      event.preventDefault();
+      const prompt = document.getElementById('vibe-task-prompt').value.trim();
+      if (!prompt) {
+        showToast('Please enter a coding task prompt', 'error');
+        return;
+      }
+
+      const workspace = document.getElementById('vibe-workspace').value.trim() || '.';
+      const model = document.getElementById('vibe-model').value;
+
+      const runBtn = document.getElementById('vibe-run-btn');
+      const stopBtn = document.getElementById('vibe-stop-btn');
+      const statusEl = document.getElementById('vibe-status');
+      const feedCard = document.getElementById('vibe-feed-card');
+      const feedContainer = document.getElementById('vibe-feed-container');
+      const stepBadge = document.getElementById('vibe-step-badge');
+
+      runBtn.disabled = true;
+      runBtn.style.display = 'none';
+      stopBtn.style.display = 'inline-block';
+      statusEl.textContent = '🚀 Agent starting...';
+      feedCard.style.display = 'block';
+      feedContainer.innerHTML = '';
+      stepBadge.textContent = 'Starting';
+
+      vibeAbortController = new AbortController();
+
+      try {
+        const res = await fetch('/v1/agent/task', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt, workspace, model }),
+          signal: vibeAbortController.signal
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.detail || 'Agent request failed');
+        }
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop();
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const raw = line.slice(6).trim();
+              if (raw === '[DONE]') {
+                statusEl.textContent = '✅ Task completed!';
+                break;
+              }
+              try {
+                const eventData = JSON.parse(raw);
+                renderVibeAgentEvent(eventData, feedContainer, stepBadge, statusEl);
+              } catch (e) {
+              }
+            }
+          }
+        }
+      } catch (err) {
+        if (err.name === 'AbortError') {
+          statusEl.textContent = '⏹️ Agent stopped by user.';
+          showToast('Agent task stopped', 'info');
+        } else {
+          statusEl.textContent = '❌ Error: ' + err.message;
+          showToast('Agent error: ' + err.message, 'error');
+        }
+      } finally {
+        runBtn.disabled = false;
+        runBtn.style.display = 'inline-block';
+        stopBtn.style.display = 'none';
+        vibeAbortController = null;
+      }
+    }
+
+    function stopVibeAgent() {
+      if (vibeAbortController) {
+        vibeAbortController.abort();
+      }
+    }
+
+    function renderVibeAgentEvent(ev, container, stepBadge, statusEl) {
+      if (ev.type === 'start') {
+        statusEl.textContent = `⚡ Working in ${ev.workspace}...`;
+      } else if (ev.type === 'step_start') {
+        stepBadge.textContent = `Step ${ev.step} / ${ev.max_steps}`;
+        statusEl.textContent = `⚙️ Step ${ev.step} in progress...`;
+      } else if (ev.type === 'thought') {
+        const item = document.createElement('div');
+        item.className = 'vibe-step-item';
+        item.innerHTML = `
+      <div style="font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+        <span>💭</span> Agent Reasoning (Step ${ev.step || ''})
+      </div>
+      <div class="vibe-step-thought">${escapeHtml(ev.content)}</div>
+    `;
+        container.appendChild(item);
+        container.scrollTop = container.scrollHeight;
+      } else if (ev.type === 'tool_call') {
+        const item = document.createElement('div');
+        item.className = 'vibe-step-item';
+        item.innerHTML = `
+      <div class="vibe-step-tool">
+        <strong>🛠️ Tool Call:</strong> <code>${escapeHtml(ev.tool)}</code>(${escapeHtml(JSON.stringify(ev.arguments || {}))})
+      </div>
+    `;
+        item.id = `tool-step-${ev.step}-${ev.tool}`;
+        container.appendChild(item);
+        container.scrollTop = container.scrollHeight;
+      } else if (ev.type === 'tool_result') {
+        const existing = document.getElementById(`tool-step-${ev.step}-${ev.tool}`);
+        const obsDiv = document.createElement('div');
+        obsDiv.className = 'vibe-step-obs';
+        obsDiv.textContent = ev.result || '(No output)';
+        if (existing) {
+          existing.appendChild(obsDiv);
+        } else {
+          const item = document.createElement('div');
+          item.className = 'vibe-step-item';
+          item.innerHTML = `<div style="font-weight:600;margin-bottom:6px;">Observation: ${escapeHtml(ev.tool)}</div>`;
+          item.appendChild(obsDiv);
+          container.appendChild(item);
+        }
+        container.scrollTop = container.scrollHeight;
+      } else if (ev.type === 'complete') {
+        const item = document.createElement('div');
+        item.className = 'vibe-step-item';
+        item.style.borderColor = 'var(--accent)';
+        item.style.background = 'rgba(99,102,241,0.08)';
+        item.innerHTML = `
+      <div style="font-weight:700;color:var(--accent);font-size:14px;margin-bottom:8px;">
+        🎉 Task Completed!
+      </div>
+      <div style="line-height:1.6;">${escapeHtml(ev.summary || 'All task steps finished.')}</div>
+    `;
+        container.appendChild(item);
+        container.scrollTop = container.scrollHeight;
+        stepBadge.textContent = 'Done';
+        statusEl.textContent = '✅ Task completed successfully!';
+        showToast('Task completed successfully!', 'success');
+      } else if (ev.type === 'error') {
+        const item = document.createElement('div');
+        item.className = 'vibe-step-item';
+        item.style.borderColor = '#ef4444';
+        item.innerHTML = `
+      <div style="font-weight:700;color:#ef4444;">❌ Error encountered</div>
+      <div>${escapeHtml(ev.error)}</div>
+    `;
+        container.appendChild(item);
+        container.scrollTop = container.scrollHeight;
+      }
+    }
+
+    // Update switchTab to handle new tabs
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      const target = document.getElementById('tab-' + tabId);
+      if (target) target.classList.add('active');
+      document.querySelectorAll('.nav-item').forEach(n => {
+        n.classList.toggle('active', n.dataset.tab === tabId);
+      });
+      if (tabId === 'dashboard') refreshDashboard();
+      if (tabId === 'vibe-coding') populateModelDropdown('vibe-model');
+      if (tabId === 'endpoints') updateEndpoints();
+      if (tabId === 'settings') loadSettings();
+      if (tabId === 'generate-image') populateModelDropdown('image-model');
+      if (tabId === 'generate-video') populateModelDropdown('video-model');
+      if (tabId === 'generate-media') populateModelDropdown('media-model');
+      if (tabId === 'deep-research') populateModelDropdown('research-model');
+      if (tabId === 'gems') loadGems();
+      if (tabId === 'chats') loadChats();
+    }
+
+    // Load model into a dropdown by ID
+    async function populateModelDropdown(selectId) {
+      const select = document.getElementById(selectId);
+      if (!select) return;
+      try {
+        const res = await fetch('/v1/models');
+        if (!res.ok) throw new Error('Failed');
+        const data = await res.json();
+        select.innerHTML = '<option value="unspecified">Auto (default)</option>';
+        const models = data.data || [];
+        models.forEach(m => {
+          const opt = document.createElement('option');
+          opt.value = m.id;
+          opt.textContent = m.display_name || m.id;
+          select.appendChild(opt);
+        });
+      } catch (e) {
+        // keep defaults
+      }
+    }
+
+    // Initialize endpoints on page load
+    setTimeout(() => { updateEndpoints(); populateModelDropdown('test-model'); populateModelDropdown('vibe-model'); }, 1000);
+  </script>
+</body>
+
+</html>
