@@ -26,7 +26,7 @@ if sys.platform == "win32":
 import uvicorn
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from loguru import logger
@@ -524,6 +524,11 @@ def make_response(content: str | None, model: str,
     }
 
 # ── Routes ────────────────────────────────────────────────────────────────────
+@app.head("/")
+@app.head("/health")
+async def head_ping():
+    return Response(status_code=200)
+
 @app.get("/", response_class=HTMLResponse)
 async def root():
     html_file = static_dir / "index.html"
