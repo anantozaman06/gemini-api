@@ -16,7 +16,7 @@ import time
 import urllib.parse
 import urllib.request
 import uuid
-from typing import AsyncGenerator, Optional, Tuple
+from typing import Any, List, Dict,  AsyncGenerator, Optional, Tuple
 
 import httpx
 from loguru import logger
@@ -236,56 +236,155 @@ def extract_response_text(raw: str) -> str:
     return clean_gemini_text(text)
 
 def parse_tool_calls(text: str) -> Tuple[str, list]:
-    """Extract tool_call blocks. Returns (clean_text, tool_calls_list)."""
-    tool_calls = []
-    # 1. Check ```tool_call ... ```
-    pattern1 = r'```tool_call\s*\n(.*?)\n```'
-    for match in re.findall(pattern1, text, re.DOTALL):
-        try:
-            data = json.loads(match.strip())
-            # Format: {"name": ..., "arguments": ...} or {"tool_calls": [...]}
-            if "tool_calls" in data and isinstance(data["tool_calls"], list):
-                for item in data["tool_calls"]:
+    tool_calls: List[Dict[str, Any]] = []
+    matched_spans = []
+
+    def _extract_from_obj(obj: Any) -> bool:
+        found = False
+        if isinstance(obj, dict):
+            if "tool_calls" in obj and isinstance(obj["tool_calls"], list):
+                for item in obj["tool_calls"]:
+                    if isinstance(item, dict):
+                        fn_name = item.get("name") or (item.get("function", {}).get("name") if isinstance(item.get("function"), dict) else None)
+                        raw_args = item.get("arguments") or (item.get("function", {}).get("arguments") if isinstance(item.get("function"), dict) else {})
+                        if fn_name:
+                            args_str = json.dumps(raw_args, ensure_ascii=False) if isinstance(raw_args, dict) else str(raw_args)
+                            tool_calls.append({
+                                "id": f"call_{uuid.uuid4().hex[:8]}",
+                                "type": "function",
+                                "function": {
+                                    "name": str(fn_name),
+                                    "arguments": args_str
+                                }
+                            })
+                            found = True
+            elif "name" in obj:
+                fn_name = obj["name"]
+                raw_args = obj.get("arguments", {})
+                args_str = json.dumps(raw_args, ensure_ascii=False) if isinstance(raw_args, dict) else str(raw_args)
+                tool_calls.append({
+                    "id": f"call_{uuid.uuid4().hex[:8]}",
+                    "type": "function",
+                    "function": {
+                        "name": str(fn_name),
+                        "arguments": args_str
+                    }
+                })
+                found = True
+            elif "function" in obj and isinstance(obj["function"], dict):
+                fn = obj["function"]
+                fn_name = fn.get("name")
+                raw_args = fn.get("arguments", {})
+                if fn_name:
+                    args_str = json.dumps(raw_args, ensure_ascii=False) if isinstance(raw_args, dict) else str(raw_args)
                     tool_calls.append({
                         "id": f"call_{uuid.uuid4().hex[:8]}",
                         "type": "function",
                         "function": {
-                            "name": item.get("name", "tool"),
-                            "arguments": json.dumps(item.get("arguments", {}), ensure_ascii=False) if isinstance(item.get("arguments"), dict) else str(item.get("arguments", "{}"))
+                            "name": str(fn_name),
+                            "arguments": args_str
                         }
                     })
-            elif "name" in data:
-                tool_calls.append({
-                    "id": f"call_{uuid.uuid4().hex[:8]}",
-                    "type": "function",
-                    "function": {
-                        "name": data["name"],
-                        "arguments": json.dumps(data.get("arguments", {}), ensure_ascii=False) if isinstance(data.get("arguments"), dict) else str(data.get("arguments", "{}")),
-                    }
-                })
-        except Exception:
-            pass
+                    found = True
+        elif isinstance(obj, list):
+            for it in obj:
+                if _extract_from_obj(it):
+                    found = True
+        return found
 
-    # 2. Check <tool_call> ... </tool_call>
-    pattern2 = r'<tool_call>\s*(.*?)\s*</tool_call>'
-    for match in re.findall(pattern2, text, re.DOTALL):
+    def _try_parse_json(s: str) -> Any:
+        s = s.strip()
         try:
-            data = json.loads(match.strip())
-            if "name" in data:
-                tool_calls.append({
-                    "id": f"call_{uuid.uuid4().hex[:8]}",
-                    "type": "function",
-                    "function": {
-                        "name": data["name"],
-                        "arguments": json.dumps(data.get("arguments", {}), ensure_ascii=False) if isinstance(data.get("arguments"), dict) else str(data.get("arguments", "{}")),
-                    }
-                })
+            return json.loads(s, strict=False)
         except Exception:
             pass
+        # Try unescaping if double escaped
+        try:
+            return json.loads(s.replace(r'\"', '"'), strict=False)
+        except Exception:
+            pass
+        return None
 
-    clean = re.sub(pattern1, '', text, flags=re.DOTALL)
-    clean = re.sub(pattern2, '', clean, flags=re.DOTALL).strip()
-    return clean, tool_calls
+    # Step 1: Tag-based extraction ```tool_call ... ```, <tool_call> ... </tool_call>, <function_call> ... </function_call>
+    tag_patterns = [
+        r'```(?:tool_call|function_call)\s*(.*?)\s*```',
+        r'<(?:tool_call|function_call)>\s*(.*?)\s*</(?:tool_call|function_call)>',
+    ]
+
+    for pat in tag_patterns:
+        for m in re.finditer(pat, text, re.DOTALL | re.IGNORECASE):
+            raw = m.group(1).strip()
+            data = _try_parse_json(raw)
+            if data and _extract_from_obj(data):
+                matched_spans.append(m.span())
+
+    # Step 2: Markdown code blocks ```json ... ``` or ``` ... ``` that contain tool_calls
+    if not tool_calls:
+        block_pattern = r'```(?:json)?\s*(\{[\s\S]*?\}|\[[\s\S]*?\])\s*```'
+        for m in re.finditer(block_pattern, text, re.DOTALL | re.IGNORECASE):
+            raw = m.group(1).strip()
+            data = _try_parse_json(raw)
+            if data and _extract_from_obj(data):
+                matched_spans.append(m.span())
+
+    # Step 3: Raw inline JSON containing "tool_calls" or "name" + "arguments"
+    if not tool_calls:
+        # Look for {"tool_calls": [...]} or {"name": "...", "arguments": ...}
+        # Find balanced/outermost JSON braces
+        json_candidates = []
+        for match in re.finditer(r'\{[^{}]*"(?:tool_calls|arguments)"[\s\S]*?\}', text):
+            # Try to expand to full matching bracket
+            start_pos = match.start()
+            # find opening { before or at start_pos
+            first_brace = text.find('{', max(0, start_pos - 50))
+            if first_brace == -1 or first_brace > start_pos:
+                first_brace = start_pos
+
+            # scan for matching closing }
+            depth = 0
+            in_str = False
+            escape = False
+            end_pos = -1
+            for idx in range(first_brace, len(text)):
+                ch = text[idx]
+                if escape:
+                    escape = False
+                    continue
+                if ch == '\\':
+                    escape = True
+                    continue
+                if ch == '"':
+                    in_str = not in_str
+                    continue
+                if not in_str:
+                    if ch == '{':
+                        depth += 1
+                    elif ch == '}':
+                        depth -= 1
+                        if depth == 0:
+                            end_pos = idx + 1
+                            break
+
+            if end_pos != -1:
+                candidate = text[first_brace:end_pos]
+                data = _try_parse_json(candidate)
+                if data and _extract_from_obj(data):
+                    matched_spans.append((first_brace, end_pos))
+                    break
+
+    # Clean text by removing all matched spans
+    if matched_spans:
+        clean_text_parts = []
+        last_idx = 0
+        for start, end in sorted(matched_spans, key=lambda x: x[0]):
+            clean_text_parts.append(text[last_idx:start])
+            last_idx = end
+        clean_text_parts.append(text[last_idx:])
+        cleaned = "".join(clean_text_parts).strip()
+    else:
+        cleaned = text.strip()
+
+    return cleaned, tool_calls
 
 # ─── Multi-Modal Data URL & Image Parsers ────────────────────────────────────
 def decode_data_url(url: str):

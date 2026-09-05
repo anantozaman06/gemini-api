@@ -303,11 +303,11 @@ def build_tools_system_prompt(tools: list[dict]) -> str:
         lines.append(f"Parameters Schema: {json.dumps(fn.get('parameters', {}))}")
 
     lines.append("\nINSTRUCTIONS FOR CALLING TOOLS:")
-    lines.append("To call one or more tools, you MUST respond in this exact JSON format enclosed in ```tool_call``` blocks:")
+    lines.append("To call one or more tools, you MUST respond with a ```tool_call code block containing valid JSON in this exact format:")
     lines.append("```tool_call")
     lines.append('{"tool_calls": [{"name": "function_name", "arguments": {"arg1": "val1"}}]}')
     lines.append("```")
-    lines.append("If you do not need to call any tool, answer normally with plain text.")
+    lines.append("CRITICAL: You MUST use the ```tool_call block format whenever executing any tool. Do NOT output raw tool call JSON outside ```tool_call. If you do not need to call any tool, answer normally with plain text.")
     return "\n".join(lines)
 
 def extract_tool_calls_from_text(text: str) -> tuple[list[dict], str]:
@@ -364,8 +364,21 @@ def build_context_prompt(messages: list[Message]) -> str:
             lines.append(f"User: {content}")
         elif m.role in ("assistant", "model"):
             if m.tool_calls:
-                tc_str = json.dumps([{"name": tc.get("function", {}).get("name"), "arguments": tc.get("function", {}).get("arguments")} for tc in m.tool_calls])
-                lines.append(f"Assistant [Tool Calls]: {tc_str}")
+                tc_list = []
+                for tc in m.tool_calls:
+                    fn = tc.get("function", tc)
+                    raw_args = fn.get("arguments", "{}")
+                    if isinstance(raw_args, str):
+                        try:
+                            raw_args = json.loads(raw_args)
+                        except Exception:
+                            pass
+                    tc_list.append({"name": fn.get("name", "tool"), "arguments": raw_args})
+                tc_block = f"```tool_call\n{json.dumps({'tool_calls': tc_list}, ensure_ascii=False)}\n```"
+                if content:
+                    lines.append(f"Assistant: {content}\n{tc_block}")
+                else:
+                    lines.append(f"Assistant:\n{tc_block}")
             elif content:
                 lines.append(f"Assistant: {content}")
         elif m.role in ("system", "developer"):
@@ -946,7 +959,10 @@ async def chat_completions(req: ChatRequest, request: Request):
         prompt_sections.append(tools_prompt)
     if context:
         prompt_sections.append(f"Previous conversation:\n{context}")
-    prompt_sections.append(f"User: {prompt}")
+    if prompt.startswith("Tool Output"):
+        prompt_sections.append(prompt)
+    else:
+        prompt_sections.append(f"User: {prompt}")
     full_prompt = "\n\n".join(prompt_sections)
 
     model_name, mode_id, think_mode = resolve_model_and_thinking(req.model)
@@ -987,7 +1003,8 @@ async def chat_completions(req: ChatRequest, request: Request):
                         if tool_calls:
                             if cleaned:
                                 yield make_chunk(model=req.model, content=cleaned, chunk_id=stream_id)
-                            yield make_chunk(model=req.model, tool_calls=tool_calls, finish_reason="tool_calls", chunk_id=stream_id)
+                            yield make_chunk(model=req.model, tool_calls=tool_calls, finish_reason=None, chunk_id=stream_id)
+                            yield make_chunk(model=req.model, finish_reason="tool_calls", chunk_id=stream_id)
                         else:
                             if accumulated_text:
                                 yield make_chunk(model=req.model, content=accumulated_text, chunk_id=stream_id)
@@ -1013,7 +1030,8 @@ async def chat_completions(req: ChatRequest, request: Request):
                         if tool_calls:
                             if cleaned:
                                 yield make_chunk(model=req.model, content=cleaned, chunk_id=stream_id)
-                            yield make_chunk(model=req.model, tool_calls=tool_calls, finish_reason="tool_calls", chunk_id=stream_id)
+                            yield make_chunk(model=req.model, tool_calls=tool_calls, finish_reason=None, chunk_id=stream_id)
+                            yield make_chunk(model=req.model, finish_reason="tool_calls", chunk_id=stream_id)
                         else:
                             if accumulated_text:
                                 yield make_chunk(model=req.model, content=accumulated_text, chunk_id=stream_id)
